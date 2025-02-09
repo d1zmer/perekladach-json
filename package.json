@@ -7,7 +7,6 @@
         "build": "webpack",
         "watch": "webpack --watch",
         "test": "jest",
-        "index": "node index.js",
         "translate": "node ./dist/bundle.js"
     },
     "keywords": [

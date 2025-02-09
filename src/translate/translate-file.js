@@ -10,7 +10,7 @@ export async function translateFile(args) {
   const sourceTranslations = readJson(args.source);
   const targetTranslation = readJson(args.target, true);
 
-  const isOverride = args['override'] ?? false;
+  const isOverride = (args['override'] ?? 'false') === 'true';
 
   for (const [key, value] of Object.entries(sourceTranslations)) {
 
