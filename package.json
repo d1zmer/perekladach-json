@@ -1,0 +1,19 @@
+{
+  "name": "perekladach-json",
+  "version": "1.0.0",
+  "description": "JSON translator for CLI",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "translation",
+    "json",
+    "openai"
+  ],
+  "author": "Dmytro Merkulov <dmitry@merkulov.design>",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
