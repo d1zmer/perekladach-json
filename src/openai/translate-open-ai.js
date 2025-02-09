@@ -16,23 +16,20 @@ export const translateOpenAi = async (text, from, to ) => {
           content: [
             {
               type: 'text',
-              text: `Task: Translate to language code: "${to}".`
+              text: `Task: Translate "${text}" to language code: "${to}". Response format: Pure JSON {lang: ..., trans: ....}.`
             },
-            {
-              type: 'text',
-              text: `Format: Pure JSON without md {lang: ..., trans: ....}.`
-            },
-            {
-              type: 'text',
-              text: text
-            }
           ]
         }
       ],
     });
 
+    const content = chatCompletion.choices[0]?.message?.content;
+    if (content) {
+      return content.replace(/```json|```/g, ''); // Remove code blocks tags
+    }
+
     // console.log( chatCompletion.usage ); // TODO: Store and display usage
-    return chatCompletion.choices[0]?.message?.content ?? {};
+    return {};
 
   } catch (error) {
     console.error(error);

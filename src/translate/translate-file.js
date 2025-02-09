@@ -45,7 +45,7 @@ async function translateJsonObject(obj, args, targetTranslation, isOverride) {
       translated++;
 
       // Add a 1-second timeout
-      await new Promise(resolve => setTimeout(resolve, args['timeout'] ?? 1000));
+      await new Promise(resolve => setTimeout(resolve, args['timeout'] ?? 500));
     }
   }
 }
