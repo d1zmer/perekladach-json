@@ -1,8 +1,11 @@
 import {translateSentence} from "./translate-sentence";
 import {readJson} from "../disk/read-json";
+import {calcSentences} from "../tools/calc-sentences";
 
 let total = 0;
 let translated = 0;
+let skipped = 0;
+let failed = 0;
 
 /**
  * Recursively translate the JSON object
@@ -21,20 +24,24 @@ async function translateJsonObject(obj, args, targetTranslation, isOverride) {
       await translateJsonObject(value, args, targetTranslation[key], isOverride);
     } else {
       if (!isOverride && targetTranslation[key] !== undefined) {
-        console.info(`Skipping ${key}`);
+        console.info(`[${translated}/${total}] Skipping ${key}`);
+        translated++;
+        skipped++;
         continue;
       }
 
       const translation = await translateSentence(value, args);
       if (translation === null) {
-        console.warn(`Failed to translate ${key}`);
+        console.warn(`[${translated}/${total}] Failed to translate ${key}`);
+        translated++;
+        failed++;
         continue;
       }
 
       targetTranslation[key] = translation;
 
       // Log the translation
-      console.info(`[${translated}] Translated ${key}: ${translation}`);
+      console.info(`[${translated}/${total}] Translated ${key}: ${translation}`);
       translated++;
 
       // Add a 1-second timeout
@@ -49,10 +56,16 @@ async function translateJsonObject(obj, args, targetTranslation, isOverride) {
  * @return {Promise<{}>}
  */
 export async function translateFile(args) {
+
+  // Read the source and target files
   const sourceTranslations = readJson(args.source);
   const targetTranslation = readJson(args.target, true);
 
+  // Check override flag
   const isOverride = (args['override'] ?? 'false') === 'true';
+
+  // Count the number of sentences
+  total = calcSentences(sourceTranslations);
 
   await translateJsonObject(sourceTranslations, args, targetTranslation, isOverride);
 
@@ -61,6 +74,8 @@ export async function translateFile(args) {
     console.warn("Some translations failed");
     process.exit(1);
   }
+
+  console.info(`Translated ${translated} sentences with ${skipped} skipped and ${failed} failed`);
 
   return targetTranslation;
 }
