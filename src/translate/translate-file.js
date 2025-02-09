@@ -7,31 +7,32 @@ import {readJson} from "../disk/read-json";
  * @return {Promise<{}>}
  */
 export async function translateFile(args) {
-
   const sourceTranslations = readJson(args.source);
   const targetTranslation = readJson(args.target, true);
 
   const isOverride = args['override'] ?? false;
-  const translationPromises = Object.entries(sourceTranslations).map(async ([key, value]) => {
+
+  for (const [key, value] of Object.entries(sourceTranslations)) {
 
     // If the key is already in the target translation and override is false, skip
     if (!isOverride && targetTranslation[key] !== undefined) {
       console.info(`Skipping ${key}`);
-      return;
+      continue;
     }
 
     const translation = await translateSentence(value, args);
     if (translation === null) {
       console.warn(`Failed to translate ${key}`);
-      return;
+      continue;
     }
 
     // Add the translation to the target translation
     targetTranslation[key] = translation;
 
-  });
+    // Add a 1-second timeout
+    await new Promise(resolve => setTimeout(resolve, args['timeout'] ?? 1000));
 
-  await Promise.all(translationPromises);
+  }
 
   // If the target translation is empty, the translation failed
   if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
