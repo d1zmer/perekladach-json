@@ -1,6 +1,9 @@
 import {translateSentence} from "./translate-sentence";
 import {readJson} from "../disk/read-json";
 
+let total = 0;
+let translated = 0;
+
 /**
  * Recursively translate the JSON object
  * @param obj
@@ -29,6 +32,10 @@ async function translateJsonObject(obj, args, targetTranslation, isOverride) {
       }
 
       targetTranslation[key] = translation;
+
+      // Log the translation
+      console.info(`[${translated}] Translated ${key}: ${translation}`);
+      translated++;
 
       // Add a 1-second timeout
       await new Promise(resolve => setTimeout(resolve, args['timeout'] ?? 1000));
