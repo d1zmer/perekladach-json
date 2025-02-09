@@ -3,12 +3,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const openAi = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY});
+const openAiClient = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY});
 
 export const translateOpenAi = async (text, from, to ) => {
 
   try {
-    const chatCompletion = await openAi.chat.completions.create({
+    const chatCompletion = await openAiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {

@@ -1,5 +1,5 @@
 import {translateSentence} from "./translate-sentence";
-import {readJson} from "./read-json";
+import {readJson} from "../disk/read-json";
 
 /**
  * Translate the source file to the target
@@ -32,5 +32,12 @@ export async function translateFile(args) {
   });
 
   await Promise.all(translationPromises);
+
+  // If the target translation is empty, the translation failed
+  if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
+    console.warn("Some translations failed");
+    process.exit(1);
+  }
+
   return targetTranslation;
 }

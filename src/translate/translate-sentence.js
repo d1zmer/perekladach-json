@@ -1,4 +1,4 @@
-import {translateOpenAi} from "./open-ai";
+import {translateOpenAi} from "../openai/translate-open-ai";
 
 export async function translateSentence(sentence, args) {
 
