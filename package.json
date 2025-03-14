@@ -1,6 +1,6 @@
 {
     "name": "perekladach-json",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "JSON translator for CLI",
     "main": "index.js",
     "scripts": {

@@ -1,12 +1,10 @@
 import {defineArgs} from "./tools/define-args";
-import {translateFile} from "./translate/translate-file";
-import {writeJson} from "./disk/write-json";
+import {translateQueue} from "./translate/translate-queue";
 
 // Define the arguments
 const args = defineArgs();
 
-// Translate the source file to the target
-const targetTranslation = await translateFile(args);
+translateQueue(args).then(()=>{
+  console.log("Translation complete");
+});
 
-// Save the target translation
-writeJson(targetTranslation, args);

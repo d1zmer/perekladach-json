@@ -1,5 +1,3 @@
-import {definePaths} from "./define-paths";
-
 /**
  * Define arguments from command line
  * @return {{}}
@@ -18,11 +16,16 @@ export function defineArgs() {
 
     // Split by '='
     const argsSpited = argString.split('=');
-    options[argsSpited[0].trim()] = argsSpited[1].trim();
+
+    let key = argsSpited[0].trim();
+    let value = argsSpited[1].trim();
+    if (key === 'to') {
+      value = value.split(',').map(v => v.trim());
+    }
+
+    options[key] = value;
 
   });
-
-  options.target = definePaths(options);
 
   return options;
 
