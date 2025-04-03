@@ -26,8 +26,6 @@ export function defineArgs() {
     process.exit(1);
   }
 
-  console.log("Parsed arguments:", parsedArgs);
-
   return parsedArgs;
 
 }

@@ -5,6 +5,9 @@ import {translateQueue} from "./translate/translate-queue";
 const args = defineArgs();
 
 translateQueue(args).then(()=>{
-  console.log("Translation complete");
+  const log = args['log'] ?? 'info';
+  if (!log || log !== 'none') {
+    console.info("Translation completed successfully");
+  }
 });
 

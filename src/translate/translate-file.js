@@ -9,28 +9,33 @@ let failed = 0;
 
 /**
  * Recursively translate the JSON object
- * @param obj
- * @param args
+ * @param fileArgs
+ * @param sourceTranslations
  * @param targetTranslation
- * @param isOverride
  * @return {Promise<void>}
  */
-async function translateJsonObject(obj, args, targetTranslation, isOverride) {
-  for (const [key, value] of Object.entries(obj)) {
+async function translateJsonObject(fileArgs, sourceTranslations, targetTranslation) {
+
+  const isOverride = fileArgs['override'];
+  const log = fileArgs['log'] ?? 'info';
+
+  for (const [key, value] of Object.entries(sourceTranslations)) {
     if (typeof value === 'object' && value !== null) {
       if (!targetTranslation[key]) {
         targetTranslation[key] = {};
       }
-      await translateJsonObject(value, args, targetTranslation[key], isOverride);
+      await translateJsonObject(fileArgs, value, targetTranslation[key]);
     } else {
       if (!isOverride && targetTranslation[key] !== undefined) {
-        console.info(`[${translated}/${total}] Skipping ${key}`);
+        if ( log === 'verbose') {
+          console.info(`[${translated}/${total}] Skipping ${key}`);
+        }
         translated++;
         skipped++;
         continue;
       }
 
-      const translation = await translateSentence(value, args);
+      const translation = await translateSentence(value, fileArgs['from'], fileArgs['to']);
       if (translation === null) {
         console.warn(`[${translated}/${total}] Failed to translate ${key}`);
         translated++;
@@ -41,33 +46,41 @@ async function translateJsonObject(obj, args, targetTranslation, isOverride) {
       targetTranslation[key] = translation;
 
       // Log the translation
-      console.info(`[${translated}/${total}] Translated ${key}: ${translation}`);
+      if ( log === 'verbose') {
+        console.info(`[${translated}/${total}] Translated ${key}: ${translation}`);
+      }
       translated++;
 
       // Add a 1-second timeout
-      await new Promise(resolve => setTimeout(resolve, args['timeout'] ?? 500));
+      await new Promise(resolve => setTimeout(resolve, fileArgs['delay'] ?? 500));
     }
   }
 }
 
 /**
  * Translate the source file to the target
- * @param args
+ * @param fileArgs - The command line arguments for 1 current file
  * @return {Promise<{}>}
  */
-export async function translateFile(args) {
-
-  // Read the source and target files
-  const sourceTranslations = readJson(args.source);
-  const targetTranslation = readJson(args.target, true);
+export async function translateFile(fileArgs) {
 
   // Check override flag
-  const isOverride = (args['override'] ?? 'false') === 'true';
+  const isOverride = fileArgs['override'];
+  const log = fileArgs['log'] ?? 'info';
+
+  // Read the source and target files
+  const sourceTranslations = readJson(fileArgs.source);
+  const targetTranslation = readJson(fileArgs.dest, !isOverride);
+
+  // Source not found
+  if (sourceTranslations === null) {
+    return null;
+  }
 
   // Count the number of sentences
   total = calcSentences(sourceTranslations);
 
-  await translateJsonObject(sourceTranslations, args, targetTranslation, isOverride);
+  await translateJsonObject(fileArgs, sourceTranslations, targetTranslation);
 
   // If the target translation is empty, the translation failed
   if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
@@ -75,7 +88,9 @@ export async function translateFile(args) {
     process.exit(1);
   }
 
-  console.info(`Translated ${translated} sentences with ${skipped} skipped and ${failed} failed`);
+  if ( !log || log !== 'none' ) {
+    console.info(`${fileArgs.to}: Translated ${translated} sentences with ${skipped} skipped and ${failed} failed`);
+  }
 
   return targetTranslation;
 }

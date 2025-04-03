@@ -1,8 +1,16 @@
 import {translateOpenAi} from "../openai/translate-open-ai";
 
-export async function translateSentence(sentence, args) {
+/**
+ * Translate a sentence using OpenAI
+ *
+ * @param sentence - The sentence to translate
+ * @param from - The source language code
+ * @param to - The target language code
+ * @return {Promise<*|null>}
+ */
+export async function translateSentence(sentence, from, to) {
 
-  const responseString = await translateOpenAi(sentence, args['from'], args['to']);
+  const responseString = await translateOpenAi(sentence, from, to);
 
   try {
     const responseJson = JSON.parse(responseString);
@@ -10,7 +18,7 @@ export async function translateSentence(sentence, args) {
     const lang = responseJson.lang ?? null;
     const translation = responseJson.trans ?? null;
 
-    if (lang === args['to'] && translation !== null){
+    if (lang === to && translation !== null){
       return translation;
     }
   } catch (error) {

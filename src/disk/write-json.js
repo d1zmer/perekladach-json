@@ -1,13 +1,11 @@
-import {definePaths} from "../tools/define-paths";
-
 const fs = require('fs');
 
 /**
  * Write a JavaScript object to a JSON file
  * @param object
- * @param args
+ * @param dest
  */
-export function writeJson(object, args) {
+export function writeJson(object, dest) {
 
   // If the object is null, the translation failed
   if (object === null) {
@@ -23,7 +21,7 @@ export function writeJson(object, args) {
 
   try {
     const jsonString = JSON.stringify(object, null, 2);
-    fs.writeFileSync(definePaths(args), jsonString, 'utf8');
+    fs.writeFileSync(dest, jsonString, 'utf8');
   } catch (e) {
     console.error('Error writing JSON file:', e);
   }
