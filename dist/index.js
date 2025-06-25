@@ -184,14 +184,17 @@ class JsonTranslator {
     if (sourceTranslations === null) return null;
     this.total = calcSentences(sourceTranslations);
     this.bars[this.languageIndex] = new cliProgress__namespace.SingleBar({
-      format: `${fileArgs.to} |${cyan}{bar}${reset}| {percentage}% || {value}/{total} sentences translated | {skipped} skipped | {failed} failed | Prompt: {promptTokens} | Completion: {completionTokens} | Total: {totalTokens}`,
+      format: `${fileArgs.to} |${cyan}{bar}${reset}| {percentage}% || {value}/{total} sentences translated | {skipped} skipped | {failed} failed | Prompt: {promptTokens} | Completion: {completionTokens} | Total tokens: {totalTokens}`,
       barCompleteChar: "█",
       barIncompleteChar: "░",
       hideCursor: true
     });
     this.bars[this.languageIndex].start(this.total, 0, {
       skipped: 0,
-      failed: 0
+      failed: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0
     });
     await this.translateJsonObject(fileArgs, sourceTranslations, targetTranslation);
     this.bars[this.languageIndex].stop();
@@ -202,6 +205,13 @@ class JsonTranslator {
     }
     return targetTranslation;
   }
+  /**
+   * Recursively translate a JSON object
+   * @param fileArgs
+   * @param source
+   * @param target
+   * @private
+   */
   async translateJsonObject(fileArgs, source, target) {
     var _a, _b, _c, _d, _e, _f;
     const isOverride = fileArgs.override;
@@ -215,8 +225,9 @@ class JsonTranslator {
           if (log === "verbose") {
             console.info(`[${this.translated}/${this.total}] Skipping ${key}`);
           }
-          this.translated++;
           this.skipped++;
+          this.translated++;
+          this.updateProgressBar();
           continue;
         }
         const translation = await translateSentence(value, fileArgs.to);
@@ -227,21 +238,27 @@ class JsonTranslator {
           console.warn(`[${this.translated}/${this.total}] Failed to translate ${key}`);
           this.failed++;
         }
-        this.translated++;
         this.promptTokens += ((_d = translation == null ? void 0 : translation.usage) == null ? void 0 : _d.prompt_tokens) ?? 0;
         this.completionTokens += ((_e = translation == null ? void 0 : translation.usage) == null ? void 0 : _e.completion_tokens) ?? 0;
         this.totalTokens += ((_f = translation == null ? void 0 : translation.usage) == null ? void 0 : _f.total_tokens) ?? 0;
-        this.bars[this.languageIndex].update(this.translated, {
-          skipped: this.skipped,
-          failed: this.failed,
-          promptTokens: this.promptTokens,
-          completionTokens: this.completionTokens,
-          totalTokens: this.totalTokens
-        });
+        this.translated++;
+        this.updateProgressBar();
         await new Promise((resolve) => setTimeout(resolve, fileArgs.delay ?? 500));
         target[key] = translation.trans;
       }
     }
+  }
+  /**
+   * Update the progress bar with the current translation status
+   */
+  updateProgressBar() {
+    this.bars[this.languageIndex].update(this.translated, {
+      skipped: this.skipped,
+      failed: this.failed,
+      promptTokens: this.promptTokens,
+      completionTokens: this.completionTokens,
+      totalTokens: this.totalTokens
+    });
   }
 }
 const fs = require("fs");
