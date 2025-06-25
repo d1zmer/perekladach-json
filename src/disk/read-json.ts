@@ -25,6 +25,7 @@ export function readJson(filePath: string, silentErrors: boolean = false): {} {
     if (!silentErrors) {
       console.error('Error reading or parsing JSON file:', err);
     }
+    return jsonData;
   }
 
   return jsonData;

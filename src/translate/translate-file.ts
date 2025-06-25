@@ -1,6 +1,7 @@
 import {translateSentence} from "./translate-sentence";
 import {readJson} from "../disk/read-json";
 import {calcSentences} from "../tools/calc-sentences";
+import {FileArgs} from "../types";
 
 let total = 0;
 let translated = 0;
@@ -14,7 +15,7 @@ let failed = 0;
  * @param targetTranslation
  * @return {Promise<void>}
  */
-async function translateJsonObject(fileArgs, sourceTranslations, targetTranslation) {
+async function translateJsonObject(fileArgs: FileArgs, sourceTranslations:Record<string, any>, targetTranslation: Record<string, any>): Promise<void> {
 
   const isOverride = fileArgs['override'];
   const log = fileArgs['log'] ?? 'info';
@@ -35,7 +36,7 @@ async function translateJsonObject(fileArgs, sourceTranslations, targetTranslati
         continue;
       }
 
-      const translation = await translateSentence(value, fileArgs['from'], fileArgs['to']);
+      const translation = await translateSentence(value, fileArgs['to']);
       if (translation === null) {
         console.warn(`[${translated}/${total}] Failed to translate ${key}`);
         translated++;
@@ -62,7 +63,7 @@ async function translateJsonObject(fileArgs, sourceTranslations, targetTranslati
  * @param fileArgs - The command line arguments for 1 current file
  * @return {Promise<{}>}
  */
-export async function translateFile(fileArgs) {
+export async function translateFile(fileArgs: FileArgs): Promise<Record<string, any> | null> {
 
   // Check override flag
   const isOverride = fileArgs['override'];
