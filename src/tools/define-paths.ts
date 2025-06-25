@@ -5,7 +5,7 @@
  * @param sourcePath - The source file path
  * @return {string}
  */
-export function definePaths(from, to, sourcePath) {
+export function definePaths(from: string, to: string, sourcePath: string): string {
 
 
   // If from and to are provided, replace it from with to

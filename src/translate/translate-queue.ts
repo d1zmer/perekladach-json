@@ -11,8 +11,8 @@ import {Args} from "../types";
 export async function translateQueue(args: Args): Promise<void> {
 
   const queue = args['to'] !== undefined ? typeof args['to'] === 'string' ? [args['to']] : args['to'] : [];
-  const from = args['from'] ?? null;
-  const source = args['source'] ?? null;
+  const from = args['from'] ?? 'auto';
+  const source = args['source'] ?? '';
   const override = args['override'] ?? false;
   const delay = args['delay'] ?? 500;
   const log = args['log'] ?? 'info';
