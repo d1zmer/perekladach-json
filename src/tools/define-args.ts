@@ -1,8 +1,18 @@
+interface Args {
+  source?: string;
+  from?: string;
+  to?: string;
+  override?: boolean;
+  delay?: number;
+  log?: 'info' | 'verbose' | 'none';
+  [key: string]: string | number | boolean | undefined | null | Record<string, any> | Array<string>;
+}
+
 /**
  * Define arguments from command line
  * @return {{}}
  */
-export function defineArgs() {
+export function defineArgs(): Args {
 
   // Check if the script is being run directly
   const args = process.argv.slice(2); // Remove 'node' and script path
@@ -11,19 +21,38 @@ export function defineArgs() {
     process.exit(1);
   }
 
-  // Parse the arguments
-  const parsedArgs = args.reduce((acc, arg) => {
-    const [key, value] = arg.split('=');
-    if (key.startsWith('-')) {
-      acc[formatKey(key)] = formatValue(value);
+  let parsedArgs: Args = {};
+  args.forEach((arg) => {
+
+    // If the argument starts with --
+    if (!arg.startsWith('--') || !arg.includes('=')) {
+      return;
     }
-    return acc;
-  }, {});
+
+    // Replace -- with empty string
+    arg = arg.replace(/^--/, '');
+
+    // Split by =
+    const [key, value] = arg.split('=');
+
+    // If the key is empty, skip it
+    if (!key || key.trim() === '') {
+      return;
+    }
+
+    parsedArgs[formatKey(key)] = formatValue(value.toString()); // Use empty string if value is undefined
+
+  });
 
   // Check if the required arguments are present
-  if (parsedArgs.length === 0) {
+  if (Object.keys(parsedArgs).length === 0) {
     console.error("No arguments passed.");
     process.exit(1);
+  }
+
+  // If from is not provided, set it to 'auto'
+  if (!parsedArgs.from) {
+    parsedArgs.from = 'auto';
   }
 
   return parsedArgs;
@@ -34,10 +63,10 @@ export function defineArgs() {
  * Format the key by removing leading dashes
  * @param key
  */
-function formatKey( key ) {
+function formatKey(key: string): string {
 
   key = key.replace(/^-+/, ''); // Remove leading dashes
-  const shortKeys = {
+  const shortKeys: { [key: string]: string } = {
     'f': 'from',
     't': 'to',
     's': 'source',
@@ -48,7 +77,7 @@ function formatKey( key ) {
   };
 
   // Check if the key is a short key
-  if (shortKeys[key]) {
+  if (shortKeys.hasOwnProperty(key)) {
     return shortKeys[key];
   }
 
@@ -61,7 +90,7 @@ function formatKey( key ) {
  * @param value
  * @return {number|{}|*|null|boolean}
  */
-function formatValue( value ) {
+function formatValue(value: string): number | Record<string, any> | Array<string> | boolean | null | string {
 
   switch (value) {
 
@@ -76,7 +105,7 @@ function formatValue( value ) {
 
     default:
 
-      // If string contains , convert to array
+      // If a string contains, convert to array
       if (value.includes(',')) {
         return value.split(',').map(item => item.trim());
       }
