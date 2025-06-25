@@ -1,3 +1,5 @@
+import {CompletionUsage} from "openai/resources/completions";
+
 export interface Args {
   source?: string;
   from?: string;
@@ -12,11 +14,16 @@ export interface Args {
 }
 
 export interface FileArgs {
-  from: string;
   to: string;
   source: string;
   dest: string;
   override: boolean;
   delay: number;
   log: 'info' | 'verbose' | 'none';
+}
+
+export interface Translation {
+  lang?: string
+  trans?: string
+  usage?: CompletionUsage
 }

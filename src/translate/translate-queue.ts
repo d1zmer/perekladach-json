@@ -27,7 +27,6 @@ export async function translateQueue(args: Args): Promise<void> {
 
     // Translate the source file to the target
     const targetTranslation = await translateFile({
-      from: from,
       to: to,
       source: source,
       dest: dest,
