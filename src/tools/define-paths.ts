@@ -7,10 +7,13 @@
  */
 export function definePaths(from: string, to: string, sourcePath: string): string {
 
-
   // If from and to are provided, replace it from with to
   if (from) {
-    return sourcePath.replace(from, to);
+    if ( from === 'auto' ) {
+      return sourcePath.replace(/\/([a-z]{2})\.json$/, `/${to}.json`);
+    } else {
+      return sourcePath.replace(from, to);
+    }
   }
 
   // If source has al least one '/', replace the last part with to

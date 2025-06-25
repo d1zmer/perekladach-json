@@ -263,7 +263,11 @@ function writeJson(object, dest) {
 }
 function definePaths(from, to, sourcePath) {
   if (from) {
-    return sourcePath.replace(from, to);
+    if (from === "auto") {
+      return sourcePath.replace(/\/([a-z]{2})\.json$/, `/${to}.json`);
+    } else {
+      return sourcePath.replace(from, to);
+    }
   }
   if (sourcePath.includes("/")) {
     return sourcePath.replace(/\/[^/]*$/, `/${to}.json`);
