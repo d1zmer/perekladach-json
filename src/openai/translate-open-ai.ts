@@ -9,8 +9,9 @@ const openAiClient = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY})
  * Translate text using OpenAI's GPT-4o-mini model
  * @param text - The text to translate
  * @param to - The target language code
+ * @return {Promise<{lang: string, trans: string, usage: object}>}
  */
-export const translateOpenAi = async (text: string, to: string ) => {
+export const translateOpenAi = async (text: string, to: string ): Promise<{ lang?: string; trans?: string; usage?: object; }> => {
 
   try {
     const chatCompletion = await openAiClient.chat.completions.create({
@@ -45,14 +46,15 @@ export const translateOpenAi = async (text: string, to: string ) => {
       // Validate the language code
       if (contentObject.lang && !/^[a-z]{2,3}(-[A-Z]{2})?$/.test(contentObject.lang)) {
         console.warn(`Invalid language code: ${contentObject.lang}`);
-        contentObject.lang = undefined; // Reset invalid lang
       }
 
     }
 
+    const usage = chatCompletion.usage || {};
+
     return {
       ...contentObject,
-      usage: chatCompletion.usage,
+      usage: usage
     };
 
   } catch (error) {
