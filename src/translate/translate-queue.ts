@@ -1,13 +1,14 @@
 import {translateFile} from "./translate-file";
 import {writeJson} from "../disk/write-json";
 import {definePaths} from "../tools/define-paths";
+import {Args} from "../types";
 
 /**
  * Translate the source file to the target queue
  * @param args
  * @return {Promise<void>}
  */
-export async function translateQueue(args) {
+export async function translateQueue(args: Args): Promise<void> {
 
   const queue = args['to'] !== undefined ? typeof args['to'] === 'string' ? [args['to']] : args['to'] : [];
   const from = args['from'] ?? null;
