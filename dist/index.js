@@ -81,6 +81,11 @@ dotenv.config();
 const openAiClient = new OpenAI({ apiKey: process.env.PEREKLADACH_OPENAI_API_KEY });
 const translateOpenAi = async (text, to) => {
   var _a, _b;
+  let usage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0
+  };
   try {
     const chatCompletion = await openAiClient.chat.completions.create({
       model: "gpt-4o-mini",
@@ -108,33 +113,21 @@ const translateOpenAi = async (text, to) => {
         console.warn(`Invalid language code: ${contentObject.lang}`);
       }
     }
-    const usage = chatCompletion.usage || {};
     return {
       ...contentObject,
-      usage
+      usage: chatCompletion.usage
     };
   } catch (error) {
     console.error(error);
     return {
       lang: to,
       trans: text,
-      usage: {}
+      usage
     };
   }
 };
 async function translateSentence(sentence, to) {
-  const responseString = await translateOpenAi(sentence, to);
-  try {
-    const responseJson = JSON.parse(responseString);
-    const lang = responseJson.lang ?? null;
-    const translation = responseJson.trans ?? null;
-    if (lang === to && translation !== null) {
-      return translation;
-    }
-  } catch (error) {
-    console.error(error);
-  }
-  return null;
+  return await translateOpenAi(sentence, to);
 }
 const fs$1 = require("fs");
 function readJson(filePath, silentErrors = false) {
@@ -170,13 +163,18 @@ function calcSentences(obj) {
   recursiveCount(obj);
   return count;
 }
+const cyan = "\x1B[36m";
+const reset = "\x1B[0m";
 let languageIndex = 0;
 let bars = [];
 let total = 0;
 let translated = 0;
 let skipped = 0;
 let failed = 0;
+let completionTokens = 0;
+let totalTokens = 0;
 async function translateJsonObject(fileArgs, sourceTranslations, targetTranslation) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
   const isOverride = fileArgs["override"];
   const log = fileArgs["log"] ?? "info";
   for (const [key, value] of Object.entries(sourceTranslations)) {
@@ -195,40 +193,59 @@ async function translateJsonObject(fileArgs, sourceTranslations, targetTranslati
         continue;
       }
       const translation = await translateSentence(value, fileArgs["to"]);
-      bars[languageIndex].increment();
-      if (translation === null) {
-        console.warn(`[${translated}/${total}] Failed to translate ${key}`);
-        translated++;
-        failed++;
-        continue;
-      }
-      targetTranslation[key] = translation;
       if (log === "verbose") {
-        console.info(`[${translated}/${total}] Translated ${key}: ${translation}`);
+        console.info(`[${translated}/${total}] Translated ${key}: ${translation.trans}, Prompt Tokens: ${((_a = translation == null ? void 0 : translation.usage) == null ? void 0 : _a.prompt_tokens) ?? 0}, Completion Tokens: ${((_b = translation == null ? void 0 : translation.usage) == null ? void 0 : _b.completion_tokens) ?? 0}, Total Tokens: ${((_c = translation == null ? void 0 : translation.usage) == null ? void 0 : _c.total_tokens) ?? 0}`);
+      }
+      if (translation.trans === "") {
+        console.warn(`[${translated}/${total}] Failed to translate ${key}`);
+        failed++;
       }
       translated++;
+      ((_d = translation == null ? void 0 : translation.usage) == null ? void 0 : _d.prompt_tokens) ?? 0;
+      completionTokens += ((_e = translation == null ? void 0 : translation.usage) == null ? void 0 : _e.completion_tokens) ?? 0;
+      totalTokens += ((_f = translation == null ? void 0 : translation.usage) == null ? void 0 : _f.total_tokens) ?? 0;
+      bars[languageIndex].update(
+        translated,
+        {
+          skipped,
+          failed,
+          promptTokens: ((_g = translation == null ? void 0 : translation.usage) == null ? void 0 : _g.prompt_tokens) ?? 0,
+          completionTokens: ((_h = translation == null ? void 0 : translation.usage) == null ? void 0 : _h.completion_tokens) ?? 0,
+          totalTokens: ((_i = translation == null ? void 0 : translation.usage) == null ? void 0 : _i.total_tokens) ?? 0
+        }
+      );
       await new Promise((resolve) => setTimeout(resolve, fileArgs["delay"] ?? 500));
     }
   }
 }
 async function translateFile(fileArgs) {
   const isOverride = fileArgs["override"];
-  const log = fileArgs["log"] ?? "info";
   const sourceTranslations = readJson(fileArgs.source);
   const targetTranslation = readJson(fileArgs.dest, !isOverride);
   if (sourceTranslations === null) {
     return null;
   }
   total = calcSentences(sourceTranslations);
-  bars[languageIndex] = new cliProgress__namespace.SingleBar({}, cliProgress__namespace.Presets.shades_classic);
-  bars[languageIndex].start(total, 0);
+  bars[languageIndex] = new cliProgress__namespace.SingleBar(
+    {
+      format: `${fileArgs["to"]} |${cyan}{bar}${reset}| {percentage}% || {value}/{total} sentences translated | {skipped} skipped | {failed} failed | Prompt: {promptTokens} | Completion: {completionTokens} | Total: {totalTokens}`,
+      barCompleteChar: "█",
+      barIncompleteChar: "░",
+      hideCursor: true
+    }
+  );
+  bars[languageIndex].start(
+    total,
+    0,
+    {
+      skipped: 0,
+      failed: 0
+    }
+  );
   await translateJsonObject(fileArgs, sourceTranslations, targetTranslation);
   if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
     console.warn("Some translations failed");
     process.exit(1);
-  }
-  if (!log || log !== "none") {
-    console.info(`${fileArgs.to}: Translated ${translated} sentences with ${skipped} skipped and ${failed} failed`);
   }
   bars[languageIndex].stop();
   languageIndex++;
@@ -292,6 +309,7 @@ const args = defineArgs();
 translateQueue(args).then(() => {
   const log = args["log"] ?? "info";
   if (!log || log !== "none") {
+    console.info("");
     console.info("Translation completed successfully");
   }
 });

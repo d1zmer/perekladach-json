@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import {CompletionUsage} from "openai/resources/completions";
+import {Translation} from "../types";
 
 dotenv.config();
 
@@ -9,9 +11,15 @@ const openAiClient = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY})
  * Translate text using OpenAI's GPT-4o-mini model
  * @param text - The text to translate
  * @param to - The target language code
- * @return {Promise<{lang: string, trans: string, usage: object}>}
+ * @return {Promise<Translation>} - The translation result in JSON format
  */
-export const translateOpenAi = async (text: string, to: string ): Promise<{ lang?: string; trans?: string; usage?: object; }> => {
+export const translateOpenAi = async (text: string, to: string ): Promise<Translation> => {
+
+  let usage: CompletionUsage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0
+  };
 
   try {
     const chatCompletion = await openAiClient.chat.completions.create({
@@ -50,11 +58,9 @@ export const translateOpenAi = async (text: string, to: string ): Promise<{ lang
 
     }
 
-    const usage = chatCompletion.usage || {};
-
     return {
       ...contentObject,
-      usage: usage
+      usage: chatCompletion.usage
     };
 
   } catch (error) {
@@ -62,7 +68,7 @@ export const translateOpenAi = async (text: string, to: string ): Promise<{ lang
     return {
       lang: to,
       trans: text,
-      usage: {}
+      usage: usage
     };
   }
 
