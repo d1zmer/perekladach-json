@@ -6,7 +6,7 @@ const fs = require('fs');
  * @param silentErrors
  * @return {{}}
  */
-export function readJson(filePath: string, silentErrors: boolean = false): {} {
+export function readJson(filePath?: string, silentErrors: boolean = false): {} {
 
   let jsonData = {};
 
