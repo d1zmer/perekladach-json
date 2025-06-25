@@ -5,7 +5,12 @@ dotenv.config();
 
 const openAiClient = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY});
 
-export const translateOpenAi = async (text, from, to ) => {
+/**
+ * Translate text using OpenAI's GPT-4o-mini model
+ * @param text
+ * @param to
+ */
+export const translateOpenAi = async (text: string, to: string ) => {
 
   try {
     const chatCompletion = await openAiClient.chat.completions.create({
