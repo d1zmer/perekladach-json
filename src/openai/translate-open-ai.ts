@@ -7,8 +7,8 @@ const openAiClient = new OpenAI({apiKey:process.env.PEREKLADACH_OPENAI_API_KEY})
 
 /**
  * Translate text using OpenAI's GPT-4o-mini model
- * @param text
- * @param to
+ * @param text - The text to translate
+ * @param to - The target language code
  */
 export const translateOpenAi = async (text: string, to: string ) => {
 
@@ -28,15 +28,40 @@ export const translateOpenAi = async (text: string, to: string ) => {
       ],
     });
 
+    // Check if the response contains choices and content
+    let contentObject: { lang?: string, trans?: string} = {};
     const content = chatCompletion.choices[0]?.message?.content;
     if (content) {
-      return content.replace(/```json|```/g, ''); // Remove code blocks tags
+
+      // Remove code block markers and parse the JSON content
+      let cleanContent = content.replace(/```json|```/g, '');
+      contentObject = JSON.parse(cleanContent);
+
+      // Ensure the content has the expected structure
+      if (!contentObject.lang || !contentObject.trans) {
+        console.warn('Unexpected response format:', contentObject);
+      }
+
+      // Validate the language code
+      if (contentObject.lang && !/^[a-z]{2,3}(-[A-Z]{2})?$/.test(contentObject.lang)) {
+        console.warn(`Invalid language code: ${contentObject.lang}`);
+        contentObject.lang = undefined; // Reset invalid lang
+      }
+
     }
 
-    // console.log( chatCompletion.usage ); // TODO: Store and display usage
-    return {};
+    return {
+      ...contentObject,
+      usage: chatCompletion.usage,
+    };
 
   } catch (error) {
     console.error(error);
+    return {
+      lang: to,
+      trans: text,
+      usage: {}
+    };
   }
+
 }
