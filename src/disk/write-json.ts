@@ -5,7 +5,7 @@ const fs = require('fs');
  * @param object
  * @param dest
  */
-export function writeJson(object, dest) {
+export function writeJson(object: any, dest: string): void {
 
   // If the object is null, the translation failed
   if (object === null) {
