@@ -8,16 +8,10 @@ indent_style = space
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.jsx]
-indent_size = 2
-
 [*.js]
 indent_size = 2
 
-[*.sass]
-indent_size = 2
-
-[*.scss]
+[*.ts]
 indent_size = 2
 
 [*.css]
@@ -28,6 +22,3 @@ trim_trailing_whitespace = false
 
 [*.{yml,yaml}]
 indent_size = 2
-
-[docker-compose.yml]
-indent_size = 4

@@ -1,6 +1,6 @@
 {
     "name": "perekladach-json",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "JSON translator for CLI",
     "main": "index.js",
     "scripts": {
@@ -11,7 +11,7 @@
         "clean": "rm -rf dist",
         "test": "jest",
         "typecheck": "tsc --noEmit",
-        "translate": "node ./dist/bundle.js"
+        "translate": "node ./dist/index.js"
     },
     "keywords": [
         "translation",
