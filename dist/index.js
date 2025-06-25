@@ -165,91 +165,84 @@ function calcSentences(obj) {
 }
 const cyan = "\x1B[36m";
 const reset = "\x1B[0m";
-let languageIndex = 0;
-let bars = [];
-let total = 0;
-let translated = 0;
-let skipped = 0;
-let failed = 0;
-let completionTokens = 0;
-let totalTokens = 0;
-async function translateJsonObject(fileArgs, sourceTranslations, targetTranslation) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
-  const isOverride = fileArgs["override"];
-  const log = fileArgs["log"] ?? "info";
-  for (const [key, value] of Object.entries(sourceTranslations)) {
-    if (typeof value === "object" && value !== null) {
-      if (!targetTranslation[key]) {
-        targetTranslation[key] = {};
-      }
-      await translateJsonObject(fileArgs, value, targetTranslation[key]);
-    } else {
-      if (!isOverride && targetTranslation[key] !== void 0) {
-        if (log === "verbose") {
-          console.info(`[${translated}/${total}] Skipping ${key}`);
-        }
-        translated++;
-        skipped++;
-        continue;
-      }
-      const translation = await translateSentence(value, fileArgs["to"]);
-      if (log === "verbose") {
-        console.info(`[${translated}/${total}] Translated ${key}: ${translation.trans}, Prompt Tokens: ${((_a = translation == null ? void 0 : translation.usage) == null ? void 0 : _a.prompt_tokens) ?? 0}, Completion Tokens: ${((_b = translation == null ? void 0 : translation.usage) == null ? void 0 : _b.completion_tokens) ?? 0}, Total Tokens: ${((_c = translation == null ? void 0 : translation.usage) == null ? void 0 : _c.total_tokens) ?? 0}`);
-      }
-      if (translation.trans === "") {
-        console.warn(`[${translated}/${total}] Failed to translate ${key}`);
-        failed++;
-      }
-      translated++;
-      ((_d = translation == null ? void 0 : translation.usage) == null ? void 0 : _d.prompt_tokens) ?? 0;
-      completionTokens += ((_e = translation == null ? void 0 : translation.usage) == null ? void 0 : _e.completion_tokens) ?? 0;
-      totalTokens += ((_f = translation == null ? void 0 : translation.usage) == null ? void 0 : _f.total_tokens) ?? 0;
-      bars[languageIndex].update(
-        translated,
-        {
-          skipped,
-          failed,
-          promptTokens: ((_g = translation == null ? void 0 : translation.usage) == null ? void 0 : _g.prompt_tokens) ?? 0,
-          completionTokens: ((_h = translation == null ? void 0 : translation.usage) == null ? void 0 : _h.completion_tokens) ?? 0,
-          totalTokens: ((_i = translation == null ? void 0 : translation.usage) == null ? void 0 : _i.total_tokens) ?? 0
-        }
-      );
-      await new Promise((resolve) => setTimeout(resolve, fileArgs["delay"] ?? 500));
-    }
+class JsonTranslator {
+  languageIndex = 0;
+  bars = [];
+  total = 0;
+  translated = 0;
+  skipped = 0;
+  failed = 0;
+  promptTokens = 0;
+  completionTokens = 0;
+  totalTokens = 0;
+  constructor() {
   }
-}
-async function translateFile(fileArgs) {
-  const isOverride = fileArgs["override"];
-  const sourceTranslations = readJson(fileArgs.source);
-  const targetTranslation = readJson(fileArgs.dest, !isOverride);
-  if (sourceTranslations === null) {
-    return null;
-  }
-  total = calcSentences(sourceTranslations);
-  bars[languageIndex] = new cliProgress__namespace.SingleBar(
-    {
-      format: `${fileArgs["to"]} |${cyan}{bar}${reset}| {percentage}% || {value}/{total} sentences translated | {skipped} skipped | {failed} failed | Prompt: {promptTokens} | Completion: {completionTokens} | Total: {totalTokens}`,
+  async translate(fileArgs) {
+    const isOverride = fileArgs.override;
+    const sourceTranslations = readJson(fileArgs.source);
+    const targetTranslation = readJson(fileArgs.dest, !isOverride);
+    if (sourceTranslations === null) return null;
+    this.total = calcSentences(sourceTranslations);
+    this.bars[this.languageIndex] = new cliProgress__namespace.SingleBar({
+      format: `${fileArgs.to} |${cyan}{bar}${reset}| {percentage}% || {value}/{total} sentences translated | {skipped} skipped | {failed} failed | Prompt: {promptTokens} | Completion: {completionTokens} | Total: {totalTokens}`,
       barCompleteChar: "█",
       barIncompleteChar: "░",
       hideCursor: true
-    }
-  );
-  bars[languageIndex].start(
-    total,
-    0,
-    {
+    });
+    this.bars[this.languageIndex].start(this.total, 0, {
       skipped: 0,
       failed: 0
+    });
+    await this.translateJsonObject(fileArgs, sourceTranslations, targetTranslation);
+    this.bars[this.languageIndex].stop();
+    this.languageIndex++;
+    if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
+      console.warn("Some translations failed");
+      process.exit(1);
     }
-  );
-  await translateJsonObject(fileArgs, sourceTranslations, targetTranslation);
-  if (Object.keys(targetTranslation).length !== Object.keys(sourceTranslations).length) {
-    console.warn("Some translations failed");
-    process.exit(1);
+    return targetTranslation;
   }
-  bars[languageIndex].stop();
-  languageIndex++;
-  return targetTranslation;
+  async translateJsonObject(fileArgs, source, target) {
+    var _a, _b, _c, _d, _e, _f;
+    const isOverride = fileArgs.override;
+    const log = fileArgs.log ?? "info";
+    for (const [key, value] of Object.entries(source)) {
+      if (typeof value === "object" && value !== null) {
+        if (!target[key]) target[key] = {};
+        await this.translateJsonObject(fileArgs, value, target[key]);
+      } else {
+        if (!isOverride && target[key] !== void 0) {
+          if (log === "verbose") {
+            console.info(`[${this.translated}/${this.total}] Skipping ${key}`);
+          }
+          this.translated++;
+          this.skipped++;
+          continue;
+        }
+        const translation = await translateSentence(value, fileArgs.to);
+        if (log === "verbose") {
+          console.info(`[${this.translated}/${this.total}] Translated ${key}: ${translation.trans}, Prompt Tokens: ${((_a = translation == null ? void 0 : translation.usage) == null ? void 0 : _a.prompt_tokens) ?? 0}, Completion Tokens: ${((_b = translation == null ? void 0 : translation.usage) == null ? void 0 : _b.completion_tokens) ?? 0}, Total Tokens: ${((_c = translation == null ? void 0 : translation.usage) == null ? void 0 : _c.total_tokens) ?? 0}`);
+        }
+        if (translation.trans === "") {
+          console.warn(`[${this.translated}/${this.total}] Failed to translate ${key}`);
+          this.failed++;
+        }
+        this.translated++;
+        this.promptTokens += ((_d = translation == null ? void 0 : translation.usage) == null ? void 0 : _d.prompt_tokens) ?? 0;
+        this.completionTokens += ((_e = translation == null ? void 0 : translation.usage) == null ? void 0 : _e.completion_tokens) ?? 0;
+        this.totalTokens += ((_f = translation == null ? void 0 : translation.usage) == null ? void 0 : _f.total_tokens) ?? 0;
+        this.bars[this.languageIndex].update(this.translated, {
+          skipped: this.skipped,
+          failed: this.failed,
+          promptTokens: this.promptTokens,
+          completionTokens: this.completionTokens,
+          totalTokens: this.totalTokens
+        });
+        await new Promise((resolve) => setTimeout(resolve, fileArgs.delay ?? 500));
+        target[key] = translation.trans;
+      }
+    }
+  }
 }
 const fs = require("fs");
 function writeJson(object, dest) {
@@ -289,7 +282,8 @@ async function translateQueue(args2) {
       console.info(`Start translating to ${to}`);
     }
     const dest = definePaths(from, to, source);
-    const targetTranslation = await translateFile({
+    const translator = new JsonTranslator();
+    const targetTranslation = await translator.translate({
       to,
       source,
       dest,

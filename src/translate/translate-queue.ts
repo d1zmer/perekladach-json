@@ -1,4 +1,4 @@
-import {translateFile} from "./translate-file";
+import {JsonTranslator} from "./json-translator";
 import {writeJson} from "../disk/write-json";
 import {definePaths} from "../tools/define-paths";
 import {Args} from "../types";
@@ -25,8 +25,8 @@ export async function translateQueue(args: Args): Promise<void> {
 
     const dest = definePaths(from, to, source);
 
-    // Translate the source file to the target
-    const targetTranslation = await translateFile({
+    const translator = new JsonTranslator();
+    const targetTranslation = await translator.translate({
       to: to,
       source: source,
       dest: dest,
