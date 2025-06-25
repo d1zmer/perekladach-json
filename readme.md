@@ -1,5 +1,5 @@
 ```terminal
-perekladach-json translate -- -source=./file.json -from=en -to=uk -override=false -delay=500
+perekladach-json translate --source=./file.json --to=uk --override=false --delay=500
 ```
 
 #### Options
