@@ -3,11 +3,11 @@
  * @param obj
  * @return {number}
  */
-export function calcSentences(obj){
+export function calcSentences(obj: Record<string, any>): number {
 
   let count = 0;
 
-  function recursiveCount(o) {
+  function recursiveCount(o: Record<string, any>): void {
     for (let key in o) {
       if (typeof o[key] === 'string') {
         count++;

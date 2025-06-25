@@ -10,3 +10,13 @@ export interface Args {
   // Allow any other string key with safe types
   [key: string]: string | number | boolean | string[] | Record<string, any> | undefined | null;
 }
+
+export interface FileArgs {
+  from: string;
+  to: string;
+  source: string;
+  dest: string;
+  override: boolean;
+  delay: number;
+  log: 'info' | 'verbose' | 'none';
+}
